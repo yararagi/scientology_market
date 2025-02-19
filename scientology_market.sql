@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Feb 18, 2025 at 07:27 PM
+-- Generation Time: Feb 19, 2025 at 12:04 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -63,7 +63,8 @@ CREATE TABLE `sede` (
 INSERT INTO `sede` (`id`, `nome`, `indirizzo`) VALUES
 (1, 'Sede Centrale', 'Via Roma 123, Milano'),
 (2, 'Sede Nord', 'Via Torino 45, Torino'),
-(3, 'Sede Sud', 'Via Napoli 67, Napoli');
+(3, 'Sede Sud', 'Via Napoli 67, Napoli'),
+(4, 'Sede Planck', 'via mussulmani boh 32');
 
 -- --------------------------------------------------------
 
@@ -87,7 +88,19 @@ INSERT INTO `tessera` (`id`, `sede_creazione_id`, `punti`, `cliente_id`, `data_c
 (1, 1, 100, 1, '2023-10-01 10:00:00'),
 (2, 2, 50, 2, '2023-10-02 11:30:00'),
 (3, 3, 200, 3, '2023-10-03 09:15:00'),
-(4, 1, 75, 4, '2023-10-04 14:45:00');
+(4, 1, 75, 4, '2023-10-04 14:45:00'),
+(5, 2, 120, 1, '2023-01-15 08:00:00'),
+(6, 3, 80, 2, '2023-02-20 12:30:00'),
+(7, 1, 150, 3, '2023-03-10 16:45:00'),
+(8, 2, 90, 4, '2023-04-05 09:20:00'),
+(9, 3, 200, 1, '2023-05-12 14:10:00'),
+(10, 1, 60, 2, '2023-06-18 10:50:00'),
+(11, 2, 110, 3, '2023-07-22 17:30:00'),
+(12, 3, 70, 4, '2023-08-30 11:15:00'),
+(13, 1, 180, 1, '2023-09-14 13:40:00'),
+(14, 2, 95, 2, '2023-10-25 15:00:00'),
+(15, 3, 130, 3, '2022-11-11 10:00:00'),
+(16, 1, 85, 4, '2022-12-24 18:20:00');
 
 --
 -- Indexes for dumped tables
@@ -127,13 +140,13 @@ ALTER TABLE `persona`
 -- AUTO_INCREMENT for table `sede`
 --
 ALTER TABLE `sede`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `tessera`
 --
 ALTER TABLE `tessera`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- Constraints for dumped tables
