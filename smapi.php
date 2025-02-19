@@ -144,7 +144,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         break;
                     case "popolarita_sedi":
                         $sql =
-                            "SELECT COUNT(tessera.id) AS 'n_tessere_create', sede.nome, sede.indirizzo, sede.id FROM sede JOIN tessera ON tessera.sede_creazione_id=sede.id GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ";
+                            "SELECT COUNT(tessera.id) AS 'n_tessere_create', sede.nome, sede.indirizzo, sede.id FROM sede LEFT JOIN tessera ON tessera.sede_creazione_id=sede.id GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ";
                         $res = $conn->query($sql);
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
