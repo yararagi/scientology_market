@@ -121,9 +121,9 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         echo $xml->asXML();
                         break;
                     case "tessere":
-                        //query per estrarre tutte le tessere create con i relativi dati della sede di creazione
+                        //query per estrarre tutte le tessere create con i relativi dati della sede di creazione e del clientes
                         $sql =
-                            "SELECT tessera.id, tessera.punti, tessera.data_creazione, CONCAT(sede.nome, ', ', sede.indirizzo) AS sede_di_creazione FROM `tessera` JOIN sede ON sede.id=tessera.sede_creazione_id; ";
+                            "SELECT tessera.id, tessera.punti, tessera.data_creazione, CONCAT(sede.nome, ', ', sede.indirizzo) AS sede_di_creazione , persona.id AS cId, persona.nome AS cNome, persona.cognome AS cCognome, persona.mail AS cEmail FROM `tessera` JOIN sede ON sede.id=tessera.sede_creazione_id JOIN persona ON persona.id=tessera.cliente_id; ";
                         $res = $conn->query($sql);
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
@@ -153,7 +153,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                                 "sede_di_creazione",
                                 $record["sede_di_creazione"]
                             );
-                            $child->addChild("cliente", $record["cliente"]);
+                            $clientechild = $child->addChild("cliente");
+                            $clientechild->addAttribute("id", $record["cId"]);
+                            $clientechild->addChild("nome", $record["cNome"]);
+                            $clientechild->addChild(
+                                "cognome",
+                                $record["cCognome"]
+                            );
+                            $clientechild->addChild("mail", $record["cEmail"]);
                         }
 
                         $res->free();
@@ -221,7 +228,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         echo $xml->asXML();
                         break;
                     default:
-                        $statuscode = 404; //operazione non presente nella web api
+                        $statuscode = 400; //l'operazione ha restituito false per parametri invalidi
                         break;
                 }
             } else {
