@@ -26,8 +26,23 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     */
 
 /*
-    WEB SERVICE MULTI-OPERAZIONE (SOLO GET) CON NOME DELL'OPERAZIONE IN URL
+    WEB SERVICE MULTI-OPERAZIONE CON NOME DELL'OPERAZIONE IN URL
     richiesta http://localhost/scientology_market/smapi.php/operazione?querystring
+
+    OPERAZIONI:
+    -read (metodo: GET) (tipo: read) (parametro: content) (risposta: XML)
+        -se content=clienti
+            restituisce l'elenco dei clienti registrati e che quindi ad un certo punto hanno richiesto una tessera
+        -se content=sedi
+            restituisce l'elenco delle sedi
+        -se content=tessere
+            restituisce l'elenco di tutte le tessere
+        -se content=popolarita_sedi
+            restituisce l'elenco delle sedi con il numero totale di tessere mai create in tale sede ed il totale di tessere create per ogni mese se ce ne sono state
+    */
+
+/*
+
     */
 
 // header per indicare al browser che la risposta sarà XML (e non HTML)
@@ -37,17 +52,20 @@ $statuscode = 405; //status code inizializzato a 405 Method Not Allowed
 
 $uri_arr = parse_url($_SERVER["REQUEST_URI"]); //scompone l'uri in parti (vedi manuale)
 $temp = explode("/", $uri_arr["path"]);
-$op = end($temp);
+$op = end($temp); //estrae l'ultima parte dell'uri (dopo l'ultimo /) quindi l'ultima operazione richiesta
 
 $conn = new mysqli("localhost", "root", "", "scientology_market");
 
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
+    //switch per gestire le varie operazioni
     switch ($op) {
         case "read":
-            if (isset($_GET["content"])) {
+            //controllo se il parametro è adeguato per eseguire l'operazione
+            if (isset($_GET["content"]) && !empty($_GET["content"])) {
+                //switch per gestire la richiesta read in base al parametro content
                 switch ($_GET["content"]) {
                     case "clienti":
-                        $sql = "SELECT * FROM persona";
+                        $sql = "SELECT * FROM persona"; //query per estrarre tutti i clienti
                         $res = $conn->query($sql);
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
@@ -76,7 +94,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         echo $xml->asXML();
                         break;
                     case "sedi":
-                        $sql = "SELECT * FROM sede";
+                        $sql = "SELECT * FROM sede"; //query per estrarre tutte le sedi
                         $res = $conn->query($sql);
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
@@ -103,6 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         echo $xml->asXML();
                         break;
                     case "tessere":
+                        //query per estrarre tutte le tessere create con i relativi dati della sede di creazione
                         $sql =
                             "SELECT tessera.id, tessera.punti, tessera.data_creazione, CONCAT(sede.nome, ', ', sede.indirizzo) AS sede_di_creazione FROM `tessera` JOIN sede ON sede.id=tessera.sede_creazione_id; ";
                         $res = $conn->query($sql);
@@ -143,6 +162,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         echo $xml->asXML();
                         break;
                     case "popolarita_sedi":
+                        //query per estrarre il totale delle tessere create con la sede di creazione comprendendo anche le sedi che non ne hanno create
                         $sql =
                             "SELECT COUNT(tessera.id) AS 'n_tessere_create', sede.nome, sede.indirizzo, sede.id FROM sede LEFT JOIN tessera ON tessera.sede_creazione_id=sede.id GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ";
                         $res = $conn->query($sql);
@@ -171,7 +191,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                                 $record["n_tessere_create"]
                             );
 
-                            //for interno per i dati della sede singola (aggiungere query)
+                            //query per estrarre il totale delle tessere diviso per mese
                             $stmt = $conn->prepare(
                                 "SELECT DATE_FORMAT(tessera.data_creazione ,'%M %Y') as mese, COUNT(tessera.id) AS ntessere FROM tessera JOIN sede ON sede.id=tessera.sede_creazione_id WHERE tessera.sede_creazione_id=? GROUP BY MONTH(tessera.data_creazione) ORDER BY tessera.sede_creazione_id ASC; "
                             );
@@ -179,6 +199,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                             $stmt->execute();
                             $childres = $stmt->get_result();
 
+                            //aggiunta dei mesi in cui sono state create delle tessere con il relativo totale
                             for ($j = 0; $j < $childres->num_rows; $j++) {
                                 $childrecord = $childres->fetch_assoc();
                                 $sedechild = $child->addChild("periodo");
