@@ -1,5 +1,4 @@
 package app;
-import app.model.*;
 import app.util.WsClient;
 
 public class App {
