@@ -34,7 +34,7 @@ public class WsClient {
 			url += "&indirizzo=" + indirizzo;
 		
 
-		URI uri = new URI(this.baseUrl + "/read?content=sedi");
+		URI uri = new URI(url);
 		HttpRequest req = HttpRequest.newBuilder().uri(uri).GET().build();
 		HttpResponse<String> res = this.client.send(req, BodyHandlers.ofString());
 
@@ -56,7 +56,7 @@ public class WsClient {
 			url += "&cognome=" + cognomeCliente;
 		
 
-		URI uri = new URI(this.baseUrl + "/read?content=tessere");
+		URI uri = new URI(url);
 		HttpRequest req = HttpRequest.newBuilder().uri(uri).GET().build();
 		HttpResponse<String> res = this.client.send(req, BodyHandlers.ofString());
 
@@ -82,6 +82,7 @@ public class WsClient {
 	public PopolaritaSedi getPopolaritaSedi(String nomeSede, String indirizzoSede, String startDate, String endDate) throws Exception{
 
 		String url = this.baseUrl + "/read?content=popolarita_sedi";
+
 		if (nomeSede != null && !nomeSede.isEmpty()) {
 			url += "&nome=" + nomeSede;
 		}
@@ -95,7 +96,7 @@ public class WsClient {
 			url += "&end_date=" + endDate;
 		}
 
-		URI uri = new URI(this.baseUrl + "/read?content=popolarita_sedi");
+		URI uri = new URI(url);
 		HttpRequest req = HttpRequest.newBuilder().uri(uri).GET().build();
 		HttpResponse<String> res = this.client.send(req, BodyHandlers.ofString());
 
