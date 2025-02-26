@@ -1,5 +1,4 @@
 package app;
-import java.util.Scanner;
 
 import app.util.WsClient;
 
