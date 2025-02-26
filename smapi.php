@@ -200,7 +200,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
                             //query per estrarre il totale delle tessere diviso per mese
                             $stmt = $conn->prepare(
-                                "SELECT DATE_FORMAT(tessera.data_creazione ,'%M %Y') as mese, COUNT(tessera.id) AS ntessere FROM tessera JOIN sede ON sede.id=tessera.sede_creazione_id WHERE tessera.sede_creazione_id=? GROUP BY MONTH(tessera.data_creazione) ORDER BY tessera.sede_creazione_id ASC; "
+                                "SELECT DATE_FORMAT(tessera.data_creazione ,'%M %Y') as mese, COUNT(tessera.id) AS ntessere FROM tessera JOIN sede ON sede.id=tessera.sede_creazione_id WHERE tessera.sede_creazione_id=? GROUP BY MONTH(tessera.data_creazione) ORDER BY tessera.sede_creazione_id ASC; " // and tessera.data... minori di maggioire di 
                             );
                             $stmt->bind_param("i", $record["id"]);
                             $stmt->execute();
