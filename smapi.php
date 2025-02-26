@@ -65,7 +65,24 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 //switch per gestire la richiesta read in base al parametro content
                 switch ($_GET["content"]) {
                     case "clienti":
+
                         $sql = "SELECT * FROM persona"; //query per estrarre tutti i clienti
+                        $conditions = array();
+                        $stmt_type = "";
+
+                        if (isset($_GET["nome"]) && $_GET["nome"] != "") {
+                            $conditions[] = "nome LIKE '%?%'";
+                            $stmt_type .= "s";
+                        }
+                        if (isset($_GET["indirizzo"]) && $_GET["indirizzo"] != "") {
+                            $conditions[] = "indirizzo LIKE '%?%'";
+                            $stmt_type .= "s";
+                        }
+                        if (count($conditions) > 0) {
+                            $sql .= " WHERE " . implode(" AND ", $conditions);
+                            $stmt->bind_param($stmt_type, ...$conditions);
+                        }
+
                         $res = $conn->query($sql);
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
@@ -94,7 +111,24 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         echo $xml->asXML();
                         break;
                     case "sedi":
-                        $sql = "SELECT * FROM sede"; //query per estrarre tutte le sedi
+
+                        $sql = "SELECT * FROM sedi"; //query per estrarre tutte le sedi
+                        $conditions = array();
+                        $stmt_type = "";
+
+                        if (isset($_GET["nome"]) && $_GET["nome"] != "") {
+                            $conditions[] = "nome LIKE '%?%'";
+                            $stmt_type .= "s";
+                        }
+                        if (isset($_GET["indirizzo"]) && $_GET["indirizzo"] != "") {
+                            $conditions[] = "indirizzo LIKE '%?%'";
+                            $stmt_type .= "s";
+                        }
+                        if (count($conditions) > 0) {
+                            $sql .= " WHERE " . implode(" AND ", $conditions);
+                            $stmt->bind_param($stmt_type, ...$conditions);
+                        }
+
                         $res = $conn->query($sql);
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
@@ -121,10 +155,27 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         echo $xml->asXML();
                         break;
                     case "tessere":
+
                         //query per estrarre tutte le tessere create con i relativi dati della sede di creazione e del clientes
                         $sql =
                             "SELECT tessera.id, tessera.punti, tessera.data_creazione, CONCAT(sede.nome, ', ', sede.indirizzo) AS sede_di_creazione , persona.id AS cId, persona.nome AS cNome, persona.cognome AS cCognome, persona.mail AS cEmail FROM `tessera` JOIN sede ON sede.id=tessera.sede_creazione_id JOIN persona ON persona.id=tessera.cliente_id; ";
-                        $res = $conn->query($sql);
+                        $conditions = array();
+                        $stmt_type = "";
+
+                        if (isset($_GET["nome"]) && $_GET["nome"] != "") {
+                            $conditions[] = "nome LIKE '%?%'";
+                            $stmt_type .= "s";
+                        }
+                        if (isset($_GET["indirizzo"]) && $_GET["indirizzo"] != "") {
+                            $conditions[] = "indirizzo LIKE '%?%'";
+                            $stmt_type .= "s";
+                        }
+                        if (count($conditions) > 0) {
+                            $sql .= " WHERE " . implode(" AND ", $conditions);
+                            $stmt->bind_param($stmt_type, ...$conditions);
+                        }
+                        
+                            $res = $conn->query($sql);
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
                         } else {
@@ -169,6 +220,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         echo $xml->asXML();
                         break;
                     case "popolarita_sedi":
+
                         //query per estrarre il totale delle tessere create con la sede di creazione comprendendo anche le sedi che non ne hanno create
                         $sql =
                             "SELECT COUNT(tessera.id) AS 'n_tessere_create', sede.nome, sede.indirizzo, sede.id FROM sede LEFT JOIN tessera ON tessera.sede_creazione_id=sede.id GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ";
