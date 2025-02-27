@@ -108,8 +108,40 @@ public class WsClient {
 		// System.out.println("received: " + body);
 		return XmlUtils.unmarshal(PopolaritaSedi.class, body);
 	}
-
-
+	public void postClienteETessera(String nome, String cognome, String indirizzoMail, int sedeId) throws Exception {
+		String url = this.baseUrl + "/crea_clientetessera";
+		
+		String formData = "nome=" + URLEncoder.encode(nome, "UTF-8") +
+		"&cognome=" + URLEncoder.encode(cognome, "UTF-8") +
+		"&mail=" + URLEncoder.encode(indirizzoMail, "UTF-8") +
+		"&sede_id=" + sedeId;
+		
+		HttpRequest req = HttpRequest.newBuilder()
+		.uri(URI.create(url))
+		.header("Content-Type", "application/x-www-form-urlencoded")
+		.POST(HttpRequest.BodyPublishers.ofString(formData))
+		.build();
+		
+		HttpResponse<String> res = client.send(req, BodyHandlers.ofString());
+		
+		if(res.statusCode() != 201) {
+			throw new WsException("Errore: " + res.body());
+		}
+	}
+	public void deleteClienteById(int id) throws Exception {
+		String url = this.baseUrl + "/elimina_cliente?id=" + id;
+		HttpRequest req = HttpRequest.newBuilder()
+		.uri(URI.create(url))
+		.DELETE()
+				.build();
+				HttpResponse<String> res = client.send(req, BodyHandlers.ofString());
+				if (res.statusCode() == 404) {
+					throw new WsException("Cliente non trovato con ID: " + id);
+				} else if (res.statusCode() != 200) {
+					throw new WsException("Errore: " + res.body());
+				}
+			}
+			
 	// Metodo per validare mese e anno
 	public static boolean isValidMonthYear(int mese, int anno) {
 		// Controlla che il mese sia tra 1 e 12
@@ -124,50 +156,14 @@ public class WsClient {
 	
 		return true;
 	}
-	
+			
 	// Metodo per combinare mese e anno in una stringa YYYY-MM
 	public static String combineYearMonth(int mese, int anno) {
 		return String.format("%04d-%02d", anno, mese); // Formato YYYY-MM
 	}
-
-	public void postClienteETessera(String nome, String cognome, String indirizzoMail, int sedeId) throws Exception {
-		String url = this.baseUrl + "/crea_clientetessera";
-		
-		String formData = "nome=" + URLEncoder.encode(nome, "UTF-8") +
-						"&cognome=" + URLEncoder.encode(cognome, "UTF-8") +
-						"&mail=" + URLEncoder.encode(indirizzoMail, "UTF-8") +
-						"&sede_id=" + sedeId;
-
-		HttpRequest req = HttpRequest.newBuilder()
-				.uri(URI.create(url))
-				.header("Content-Type", "application/x-www-form-urlencoded")
-				.POST(HttpRequest.BodyPublishers.ofString(formData))
-				.build();
-
-		HttpResponse<String> res = client.send(req, BodyHandlers.ofString());
-
-		if(res.statusCode() != 201) {
-			throw new WsException("Errore: " + res.body());
-		}
-	}
-
-	public void deleteClienteById(int id) throws Exception {
-		String url = this.baseUrl + "/elimina_cliente?id=" + id;
-		HttpRequest req = HttpRequest.newBuilder()
-				.uri(URI.create(url))
-				.DELETE()
-				.build();
-		HttpResponse<String> res = client.send(req, BodyHandlers.ofString());
-		if (res.statusCode() == 404) {
-			throw new WsException("Cliente non trovato con ID: " + id);
-		} else if (res.statusCode() != 200) {
-			throw new WsException("Errore: " + res.body());
-		}
-	}
 	
-
 	public void menuScelta(){
-
+		
 		Scanner in = new Scanner(System.in);
 		boolean nExit = true; 
 		String nome;
