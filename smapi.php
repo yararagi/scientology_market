@@ -80,10 +80,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         }
                         if (count($conditions) > 0) {
                             $sql .= " WHERE " . implode(" AND ", $conditions);
+                            $stmt= $conn->prepare($sql);
                             $stmt->bind_param($stmt_type, ...$conditions);
+                        }else{
+                            $stmt= $conn->prepare($sql);
                         }
+                        $stmt->execute();
+                        $res = $stmt->get_result();
 
-                        $res = $conn->query($sql);
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
                         } else {
@@ -112,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         break;
                     case "sedi":
 
-                        $sql = "SELECT * FROM sedi"; //query per estrarre tutte le sedi
+                        $sql = "SELECT * FROM sede"; //query per estrarre tutte le sedi
                         $conditions = array();
                         $stmt_type = "";
 
@@ -126,10 +130,15 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         }
                         if (count($conditions) > 0) {
                             $sql .= " WHERE " . implode(" AND ", $conditions);
+                            $stmt= $conn->prepare($sql);
                             $stmt->bind_param($stmt_type, ...$conditions);
+                        }else{
+                            $stmt= $conn->prepare($sql);
                         }
 
-                        $res = $conn->query($sql);
+                        $stmt->execute();
+                        $res = $stmt->get_result();
+
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
                         } else {
@@ -172,10 +181,13 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         }
                         if (count($conditions) > 0) {
                             $sql .= " WHERE " . implode(" AND ", $conditions);
+                            $stmt=$conn->prepare($sql);
                             $stmt->bind_param($stmt_type, ...$conditions);
+                        }else{
+                            $stmt=$conn->prepare($sql);                        
                         }
-                        
-                            $res = $conn->query($sql);
+                        $stmt->execute();
+                        $res = $stmt->get_result();
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
                         } else {
@@ -223,8 +235,40 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
                         //query per estrarre il totale delle tessere create con la sede di creazione comprendendo anche le sedi che non ne hanno create
                         $sql =
-                            "SELECT COUNT(tessera.id) AS 'n_tessere_create', sede.nome, sede.indirizzo, sede.id FROM sede LEFT JOIN tessera ON tessera.sede_creazione_id=sede.id GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ";
-                        $res = $conn->query($sql);
+                            "SELECT COUNT(tessera.id) AS 'n_tessere_create', sede.nome, sede.indirizzo, sede.id FROM sede LEFT JOIN tessera ON tessera.sede_creazione_id=sede.id ";
+                        $conditions = array();
+                        $stmt_type = "";
+
+                        if (isset($_GET["nome"]) && $_GET["nome"] != "") {
+                            $conditions[] = " nome LIKE '%?%' ";
+                            $stmt_type .= "s";
+                        }
+                        if (isset($_GET["indirizzo"]) && $_GET["indirizzo"] != "") {
+                            $conditions[] = " indirizzo LIKE '%?%' ";
+                            $stmt_type .= "s";
+                        }
+                        if (isset($_GET["end_date"]) && $_GET["end_date"] != "") {
+                            $date=date_create($_GET['end_date']."-1 23:59:59");
+                            $data=date_format($date, "Y-m-t H:i:s");
+                            $conditions[] = " tessera.data_creazione < ? ";
+                            $stmt_type .= "s";
+                        }
+                        if (isset($_GET["start_date"]) && $_GET["start_date"] != "") {
+                            $date=date_create($_GET['start_date']."-1 00:00:00");
+                            $data=date_format($date, "Y-m-d H:i:s");
+                            $conditions[] = " tessera.data_creazione > ? ";
+                            $stmt_type .= "s";
+                        }
+                        if (count($conditions) > 0) {
+                            $sql .= " WHERE " . implode(" AND ", $conditions);
+                            $stmt= $conn->prepare($sql." GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ");
+                            $stmt->bind_param($stmt_type, ...$conditions);
+                        }else{
+                            $stmt=$conn->prepare($sql." GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ");
+                        }
+                        $stmt->execute();
+                        $res = $stmt->get_result();
+
                         if ($res->num_rows == 0) {
                             $statuscode = 204; //l'operazione non ha estratto dati
                         } else {
@@ -294,6 +338,86 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     }
 } else {
     $statuscode = 404; //operazione non presente nella web api
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    switch ($op) {
+        case "crea_clientetessera":
+            if(isset($_POST["nome"]) && isset($_POST["cognome"]) && isset($_POST["mail"]) && isset($_POST["sede_id"])) {
+                try {
+                    $conn->begin_transaction();
+
+                    // Inserimento iniziale della persona necessario per poi creare la tessera
+                    $stmt = $conn->prepare("INSERT INTO persona (nome, cognome, mail) VALUES (?, ?, ?)");
+                    $stmt->bind_param("sss", $_POST["nome"], $_POST["cognome"], $_POST["mail"]);
+                    $stmt->execute();
+                    $cliente_id = $conn->insert_id;
+                    
+                    $stmt = $conn->prepare("INSERT INTO tessera (sede_creazione_id, punti, cliente_id) VALUES (?, 0, ?)");
+                    $stmt->bind_param("ii", $_POST["sede_id"], $cliente_id);
+                    $stmt->execute();
+                    
+                    $conn->commit();
+                    $statuscode = 200;
+
+                } catch (Exception $e) {
+                    $conn->rollback();
+                    $statuscode = 500; //l'operazione non è stata eseguita con succeso dal server
+                    error_log($e->getMessage());
+                }
+            } else {
+                $statuscode = 400; //l'operazione ha restituito false per parametri insufficienti
+            }
+            break;
+        default:
+            $statuscode = 404; //operazione non presente nella web api
+            break;
+    }
+} else {
+    $statuscode = 404; //operazione non presente nella web api
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
+    switch ($op) {
+        case "elimina_cliente":
+            $id = isset($_GET['id']) ? $_GET['id'] : null;
+
+            if($id === null) {
+                $statuscode = 400;
+                break;
+            }
+
+            try {
+                $conn->begin_transaction();
+
+                // Eliminazione della tessera 
+                $stmt = $conn->prepare("DELETE FROM tessera WHERE cliente_id = ?");
+                $stmt->bind_param("i", $id);
+                $stmt->execute();
+
+                // Eliminazione del cliente
+                $stmt = $conn->prepare("DELETE FROM persona WHERE id = ?");
+                $stmt->bind_param("i", $id);
+                $stmt->execute();
+
+                if($stmt->affected_rows === 0) {
+                    $statuscode = 404;
+                    throw new Exception("Cliente non trovato con ID: $id");
+                }
+
+                $conn->commit();
+                $statuscode = 200;
+
+            } catch (Exception $e) {
+                $conn->rollback();
+                $statuscode = 500;
+                error_log($e->getMessage());
+            }
+            break;
+        default:
+            $statuscode = 404;
+            break;
+    }
 }
 
 http_response_code($statuscode); //invio lo status code della risposta
