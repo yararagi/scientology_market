@@ -67,24 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                     case "clienti":
 
                         $sql = "SELECT * FROM persona"; //query per estrarre tutti i clienti
-                        $conditions = array();
-                        $stmt_type = "";
-
-                        if (isset($_GET["nome"]) && $_GET["nome"] != "") {
-                            $conditions[] = "nome LIKE '%?%'";
-                            $stmt_type .= "s";
-                        }
-                        if (isset($_GET["indirizzo"]) && $_GET["indirizzo"] != "") {
-                            $conditions[] = "indirizzo LIKE '%?%'";
-                            $stmt_type .= "s";
-                        }
-                        if (count($conditions) > 0) {
-                            $sql .= " WHERE " . implode(" AND ", $conditions);
-                            $stmt= $conn->prepare($sql);
-                            $stmt->bind_param($stmt_type, ...$conditions);
-                        }else{
-                            $stmt= $conn->prepare($sql);
-                        }
+                        $stmt= $conn->prepare($sql); 
                         $stmt->execute();
                         $res = $stmt->get_result();
 
@@ -118,20 +101,23 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
                         $sql = "SELECT * FROM sede"; //query per estrarre tutte le sedi
                         $conditions = array();
+                        $params = array();
                         $stmt_type = "";
 
                         if (isset($_GET["nome"]) && $_GET["nome"] != "") {
-                            $conditions[] = "nome LIKE '%?%'";
+                            $conditions[] = "nome LIKE ?";
                             $stmt_type .= "s";
+                            $params[] = "%".$_GET['nome']."%";
                         }
                         if (isset($_GET["indirizzo"]) && $_GET["indirizzo"] != "") {
-                            $conditions[] = "indirizzo LIKE '%?%'";
+                            $conditions[] = "indirizzo LIKE ?";
                             $stmt_type .= "s";
+                            $params[] = "%".$_GET['indirizzo']."%";
                         }
                         if (count($conditions) > 0) {
                             $sql .= " WHERE " . implode(" AND ", $conditions);
                             $stmt= $conn->prepare($sql);
-                            $stmt->bind_param($stmt_type, ...$conditions);
+                            $stmt->bind_param($stmt_type, ...$params);
                         }else{
                             $stmt= $conn->prepare($sql);
                         }
@@ -167,22 +153,25 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
                         //query per estrarre tutte le tessere create con i relativi dati della sede di creazione e del clientes
                         $sql =
-                            "SELECT tessera.id, tessera.punti, tessera.data_creazione, CONCAT(sede.nome, ', ', sede.indirizzo) AS sede_di_creazione , persona.id AS cId, persona.nome AS cNome, persona.cognome AS cCognome, persona.mail AS cEmail FROM `tessera` JOIN sede ON sede.id=tessera.sede_creazione_id JOIN persona ON persona.id=tessera.cliente_id; ";
+                            "SELECT tessera.id, tessera.punti, tessera.data_creazione, CONCAT(sede.nome, ', ', sede.indirizzo) AS sede_di_creazione , persona.id AS cId, persona.nome AS cNome, persona.cognome AS cCognome, persona.mail AS cEmail FROM `tessera` JOIN sede ON sede.id=tessera.sede_creazione_id JOIN persona ON persona.id=tessera.cliente_id";
                         $conditions = array();
                         $stmt_type = "";
+                        $params = array();
 
                         if (isset($_GET["nome"]) && $_GET["nome"] != "") {
-                            $conditions[] = "nome LIKE '%?%'";
+                            $conditions[] = "persona.nome LIKE ?";
                             $stmt_type .= "s";
+                            $params[] = "%".$_GET['nome']."%";
                         }
-                        if (isset($_GET["indirizzo"]) && $_GET["indirizzo"] != "") {
-                            $conditions[] = "indirizzo LIKE '%?%'";
+                        if (isset($_GET["cognome"]) && $_GET["cognome"] != "") {
+                            $conditions[] = "persona.cognome LIKE ?";
                             $stmt_type .= "s";
+                            $params[] = "%".$_GET['cognome']."%";
                         }
                         if (count($conditions) > 0) {
                             $sql .= " WHERE " . implode(" AND ", $conditions);
                             $stmt=$conn->prepare($sql);
-                            $stmt->bind_param($stmt_type, ...$conditions);
+                            $stmt->bind_param($stmt_type, ...$params);
                         }else{
                             $stmt=$conn->prepare($sql);                        
                         }
@@ -237,34 +226,42 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         $sql =
                             "SELECT COUNT(tessera.id) AS 'n_tessere_create', sede.nome, sede.indirizzo, sede.id FROM sede LEFT JOIN tessera ON tessera.sede_creazione_id=sede.id ";
                         $conditions = array();
+                        $params = array();
                         $stmt_type = "";
 
                         if (isset($_GET["nome"]) && $_GET["nome"] != "") {
-                            $conditions[] = " nome LIKE '%?%' ";
+                            $conditions[] = " nome LIKE ? ";
                             $stmt_type .= "s";
+                            $params[] = "%".$_GET["nome"]."%";
                         }
                         if (isset($_GET["indirizzo"]) && $_GET["indirizzo"] != "") {
-                            $conditions[] = " indirizzo LIKE '%?%' ";
+                            $conditions[] = " indirizzo LIKE ? ";
                             $stmt_type .= "s";
+                            $params[] = "%".$_GET["indirizzo"]."%";
+
                         }
                         if (isset($_GET["end_date"]) && $_GET["end_date"] != "") {
                             $date=date_create($_GET['end_date']."-1 23:59:59");
                             $data=date_format($date, "Y-m-t H:i:s");
                             $conditions[] = " tessera.data_creazione < ? ";
                             $stmt_type .= "s";
+                            $params[] = $data;
                         }
                         if (isset($_GET["start_date"]) && $_GET["start_date"] != "") {
                             $date=date_create($_GET['start_date']."-1 00:00:00");
                             $data=date_format($date, "Y-m-d H:i:s");
                             $conditions[] = " tessera.data_creazione > ? ";
                             $stmt_type .= "s";
+                            $params[] = $data;
                         }
                         if (count($conditions) > 0) {
                             $sql .= " WHERE " . implode(" AND ", $conditions);
-                            $stmt= $conn->prepare($sql." GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ");
-                            $stmt->bind_param($stmt_type, ...$conditions);
+                            $sql .= " GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ";
+                            $stmt= $conn->prepare($sql);
+                            $stmt->bind_param($stmt_type, ...$params);
                         }else{
-                            $stmt=$conn->prepare($sql." GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ");
+                            $sql .= " GROUP BY sede.id ORDER BY tessera.sede_creazione_id; ";
+                            $stmt=$conn->prepare($sql);
                         }
                         $stmt->execute();
                         $res = $stmt->get_result();
@@ -295,10 +292,13 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                             );
 
                             //query per estrarre il totale delle tessere diviso per mese
-                            $stmt = $conn->prepare(
-                                "SELECT DATE_FORMAT(tessera.data_creazione ,'%M %Y') as mese, COUNT(tessera.id) AS ntessere FROM tessera JOIN sede ON sede.id=tessera.sede_creazione_id WHERE tessera.sede_creazione_id=? GROUP BY MONTH(tessera.data_creazione) ORDER BY tessera.sede_creazione_id ASC; " // and tessera.data... minori di maggioire di 
-                            );
-                            $stmt->bind_param("i", $record["id"]);
+                            $sql = "SELECT DATE_FORMAT(tessera.data_creazione ,'%M %Y') as mese, COUNT(tessera.id) AS ntessere FROM tessera JOIN sede ON sede.id=tessera.sede_creazione_id WHERE tessera.sede_creazione_id=? ";
+                            if(count($conditions)>0)
+                                $sql .= " AND " . implode(" AND ", $conditions);
+                            $sql .= " GROUP BY YEAR(tessera.data_creazione), MONTH(tessera.data_creazione) ORDER BY YEAR(tessera.data_creazione), MONTH(tessera.data_creazione); ";
+
+                            $stmt = $conn->prepare($sql);
+                            $stmt->bind_param("i".$stmt_type, $record["id"], ...$params);
                             $stmt->execute();
                             $childres = $stmt->get_result();
 
@@ -336,12 +336,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             $statuscode = 404; //operazione non presente nella web api
             break;
     }
-} else {
-    $statuscode = 404; //operazione non presente nella web api
-}
-
-// Verifica se il metodo di richiesta è POST
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+} else if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Switch per gestire diverse operazioni basate sul valore di $op
     switch ($op) {
         // Caso per creare un nuovo cliente con tessera
@@ -358,6 +353,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $stmt->execute();
                     // Ottieni l'ID della persona appena inserita
                     $cliente_id = $conn->insert_id;
+                    var_dump($conn);
                     
                     // Inserimento della tessera associata al cliente
                     $stmt = $conn->prepare("INSERT INTO tessera (sede_creazione_id, punti, cliente_id) VALUES (?, 0, ?)");
@@ -372,8 +368,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
 
                 } catch (Exception $e) {
-                    $conn->rollback(); // In caso di errore, annulla la transazione
-                
+                    $conn->rollback(); // In caso di errore, annulla la transazione                
                     $statuscode = 500; // (Errore interno del server)
                 }
             } else {
@@ -384,13 +379,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $statuscode = 404;  //operazione non presente nella web api
             break;
     }
-} else {
-    // imposta il codice di stato a 404 (Non trovato)
-    $statuscode = 404;
-}
-
-// Verifica se il metodo di richiesta è DELETE
-if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
+} else if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
     // Switch per gestire diverse operazioni basate sul valore di $op
     switch ($op) {
         // Caso per eliminare un cliente
@@ -427,7 +416,8 @@ if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
                 if ($conn->commit()) {
                     $statuscode = 200; // operazione ha avuto sucesso
                 } else {
-                    $statuscode = 204; //l'operazione non si è conessa corretamente 
+                    $conn->rollback(); // In caso di errore, annulla la transazione
+                    $statuscode = 500; //l'operazione non si è conessa corretamente 
                 }
 
             } catch (Exception $e) {
@@ -440,6 +430,8 @@ if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
             $statuscode = 404; //operazione non presente nella web api
             break;
     }
+}else{
+    $statuscode= 404;
 }
 
 http_response_code($statuscode); //invio lo status code della risposta

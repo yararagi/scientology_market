@@ -20,6 +20,9 @@ public class WsClient {
 	private String baseUrl;
 	private HttpClient client;
 
+	Scanner in = new Scanner(System.in);
+
+
 	public WsClient(String baseUrl) {
 		this.baseUrl = baseUrl;
 		this.client = HttpClient.newHttpClient();
@@ -120,13 +123,12 @@ public class WsClient {
 		URI uri = new URI(url);
 		HttpRequest req = HttpRequest.newBuilder()
 		.uri(uri)
-		.header("Content-Type", "application/x-www-form-urlencoded")
 		.POST(HttpRequest.BodyPublishers.ofString(formData))
+		.header("Content-Type", "application/x-www-form-urlencoded")
 		.build();
 		
 		HttpResponse<String> res = client.send(req, BodyHandlers.ofString());
-		
-		if(res.statusCode() != 201) {
+		if(res.statusCode() != 200) {
 			throw new WsException("Errore: " + res.body());
 		}
 	}
@@ -167,9 +169,18 @@ public class WsClient {
 		return String.format("%04d-%02d", anno, mese); // Formato YYYY-MM
 	}
 	
+	public int getscelta(){
+		int scelta=404;
+		try {
+			scelta= Integer.parseInt(in.nextLine());			
+		} catch (Exception e) {
+			scelta=404;
+		}
+		return scelta;
+	}
+
 	public void menuScelta(){
 		
-		Scanner in = new Scanner(System.in);
 		boolean nExit = true; 
 		String nome;
 		String cognome;
@@ -182,31 +193,32 @@ public class WsClient {
 		int endAnno = 0;
 
 		while(nExit){
-			System.out.println(
+			System.out.print(
 				"1) Per Inserire una nuova Tessera insieme Cliente \n"+
 				"2) Per stampare le Tessere \n"+
 				"3) Per stampare le Sedi \n"+
 				"4) Per stampare i Clienti Registrati \n"+
 				"5) Per elmiminare il Cliente e la Tessera \n"+
-				"6) Per Uscire \n"
+				"6) Per Uscire \n>"
 			);
-			int scelta= in.nextInt();
+			int scelta= getscelta();
 			switch (scelta) {
 				case 1:
 
 					System.out.println("-- Inserimento nuovo cliente con tessera --");
 		
 					System.out.print("Nome: ");
-					nome = in.next();
+					nome = in.nextLine();
 					
 					System.out.print("Cognome: ");
-					cognome = in.next();
+					cognome = in.nextLine();
 					
 					System.out.print("Email: ");
-					indirizzo = in.next();
+					indirizzo = in.nextLine();
 					
 					System.out.print("ID Sede di creazione: ");
 					id = in.nextInt();
+					in.nextLine();
 					
 					try {
 						postClienteETessera(nome, cognome, indirizzo, id);
@@ -218,11 +230,11 @@ public class WsClient {
 
 				case 2:
 
-					System.out.println(
+					System.out.print(
 						"1) Per stampare tutte le tessere \n"+
-						"2) Per cercare le tessere in base al Nome e al Cognome di un cliente\n"
+						"2) Per cercare le tessere in base al Nome e Cognome di un cliente\n>"
 					);
-					scelta= in.nextInt();
+					scelta= getscelta();
 					switch (scelta) {
 						case 1:
 
@@ -235,10 +247,10 @@ public class WsClient {
 
 						case 2:
 
-							System.out.println("Inserisci il nome del cliente:");
-							nome = in.next();
-							System.out.println("Inserisci il cognome del cliente:");
-							cognome = in.next();
+							System.out.print("Inserisci il nome del cliente:");
+							nome = in.nextLine();
+							System.out.print("Inserisci il cognome del cliente:");
+							cognome = in.nextLine();
 							try {
 								System.out.println(getTessere(nome, cognome));
 							} catch (Exception e) {
@@ -253,12 +265,12 @@ public class WsClient {
 
 				case 3:
 
-					System.out.println(
+					System.out.print(
 						"1) Per stampare tutte le sedi \n"+
 						"2) Per cercare una sede in base al Nome e Indirizzo \n"+
-						"3) Per stampare il ragguaglio della creazione delle tessere \n"
+						"3) Per stampare il ragguaglio della creazione delle tessere \n>"
 					);
-					scelta= in.nextInt();
+					scelta= getscelta();
 
 					switch (scelta) {
 						case 1:
@@ -273,10 +285,10 @@ public class WsClient {
 
 						case 2:
 
-							System.out.println("Inserisci il nome della sede:");
-							nome = in.next();
-							System.out.println("Inserisci l'indirizzo della sede:");
-							indirizzo = in.next();
+							System.out.print("Inserisci il nome della sede:");
+							nome = in.nextLine();
+							System.out.print("Inserisci l'indirizzo della sede:");
+							indirizzo = in.nextLine();
 							try {
 								System.out.println(getSedi(nome, indirizzo));
 							} catch (Exception e) {
@@ -288,14 +300,14 @@ public class WsClient {
 
 						case 3:
 						
-							System.out.println(
+							System.out.print(
 								"1) Per stampare il ragguaglio di tutte le sedi \n"+
 								"2) Per stampare il ragguaglio a partire dal Nome e l'Indirizzo \n"+
 								"3) Per stampare il ragguaglio dato un Range di Tempo \n"+
-								"4) Per stampare il ragguaglio a partire dal Nome e l'Indirizzo con l'aggiunta di un Range di Tempo \n"
+								"4) Per stampare il ragguaglio a partire dal Nome e l'Indirizzo con l'aggiunta di un Range di Tempo \n>"
 							);
 
-							scelta= in.nextInt();
+							scelta= getscelta();
 
 							switch (scelta) {
 								case 1:
@@ -309,10 +321,10 @@ public class WsClient {
 
 								case 2:
 
-									System.out.println("Inserisci il nome della sede:");
-									nome = in.next().trim();
-									System.out.println("Inserisci l'indirizzo della sede:");
-									indirizzo = in.next().trim();
+									System.out.print("Inserisci il nome della sede:");
+									nome = in.nextLine().trim();
+									System.out.print("Inserisci l'indirizzo della sede:");
+									indirizzo = in.nextLine().trim();
 									try {
 										System.out.println(getPopolaritaSedi(nome, indirizzo, null, null));
 									} catch (Exception e) {
@@ -325,10 +337,12 @@ public class WsClient {
 
 									// Input e validazione del mese e anno di inizio
 									while (true) {
-										System.out.println("Inserisci il mese di inizio (1-12):");
+										System.out.print("Inserisci il mese di inizio (1-12):");
 										startMese = in.nextInt();
-										System.out.println("Inserisci l'anno di inizio (es. 2023):");
-										startAnno = in.nextInt();
+										in.nextLine();
+										System.out.print("Inserisci l'anno di inizio (es. 2023):");
+										startAnno =  in.nextInt();
+										in.nextLine();
 
 										if (isValidMonthYear(startMese, startAnno)) {
 											break;
@@ -339,10 +353,12 @@ public class WsClient {
 
 									// Input e validazione del mese e anno di fine
 									while (true) {
-										System.out.println("Inserisci il mese di fine (1-12):");
+										System.out.print("Inserisci il mese di fine (1-12):");
 										endMese = in.nextInt();
-										System.out.println("Inserisci l'anno di fine (es. 2023):");
+										in.nextLine();
+										System.out.print("Inserisci l'anno di fine (es. 2023):");
 										endAnno = in.nextInt();
+										in.nextLine();
 
 										if (isValidMonthYear(endMese, endAnno)) {
 											break;
@@ -361,17 +377,19 @@ public class WsClient {
 
 								case 4:
 
-									System.out.println("Inserisci il nome della sede:");
-									nome = in.next();
-									System.out.println("Inserisci l'indirizzo della sede:");
-									indirizzo = in.next();
+									System.out.print("Inserisci il nome della sede:");
+									nome = in.nextLine();
+									System.out.print("Inserisci l'indirizzo della sede:");
+									indirizzo = in.nextLine();
 
 									// Input e validazione del mese e anno di inizio
 									while (true) {
-										System.out.println("Inserisci il mese di inizio (1-12):");
-										startMese = in.nextInt();
-										System.out.println("Inserisci l'anno di inizio (es. 2023):");
+										System.out.print("Inserisci il mese di inizio (1-12):");
+										startMese =  in.nextInt();
+										in.nextLine();
+										System.out.print("Inserisci l'anno di inizio (es. 2023):");
 										startAnno = in.nextInt();
+										in.nextLine();
 
 										if (isValidMonthYear(startMese, startAnno)) {
 											break;
@@ -382,10 +400,12 @@ public class WsClient {
 
 									// Input e validazione del mese e anno di fine
 									while (true) {
-										System.out.println("Inserisci il mese di fine (1-12):");
-										endMese = in.nextInt();
-										System.out.println("Inserisci l'anno di fine (es. 2023):");
-										endAnno = in.nextInt();
+										System.out.print("Inserisci il mese di fine (1-12):");
+										endMese =  in.nextInt();
+										in.nextLine();
+										System.out.print("Inserisci l'anno di fine (es. 2023):");
+										endAnno =  in.nextInt();
+										in.nextLine();
 
 										if (isValidMonthYear(endMese, endAnno) && ((endAnno>startAnno) || (endAnno==startAnno && endMese>=startMese) )) {
 											break;
@@ -424,12 +444,12 @@ public class WsClient {
 
 				case 5:
 
-					System.out.println(
+					System.out.print(
 						"1) Per prima ricevevre la lista degli utenti e solo poi eliminarlo \n"+
-						"2) Per eliminarlo dal id \n"
+						"2) Per eliminarlo dal id \n>"
 						
 					);
-					scelta= in.nextInt();
+					scelta= getscelta();
 
 					switch (scelta) {
 						case 1:
@@ -442,8 +462,9 @@ public class WsClient {
 							
 						case 2:
 
-							System.out.println("Inserisci l'ID del cliente da eliminare:");
-							int idCliente = in.nextInt();
+							System.out.print("Inserisci l'ID del cliente da eliminare:");
+							int idCliente =  in.nextInt();
+							in.nextLine();
 							try {
 								deleteClienteById(idCliente);
 								System.out.println("Cliente e tessera eliminati con successo.");
@@ -458,7 +479,7 @@ public class WsClient {
 					}
 				
 					
-		
+					break;
 				case 6:
 					System.out.println("stai per Uscire dal programma");
 					nExit = false; 
@@ -466,6 +487,7 @@ public class WsClient {
 					break;
 
 				default:
+					System.out.println("input non valido, riprova");
 					break;
 			}
 		}
