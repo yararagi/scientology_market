@@ -104,6 +104,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         $params = array();
                         $stmt_type = "";
 
+                        //primo filro che implementa il nome che controlla se c'è e in caso aggiunta un filto 
                         if (isset($_GET["nome"]) && $_GET["nome"] != "") {
                             $conditions[] = "nome LIKE ?";
                             $stmt_type .= "s";
@@ -158,6 +159,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         $stmt_type = "";
                         $params = array();
 
+                        //primo filro che implementa il nome che controlla se c'è e in caso aggiunta un filto 
                         if (isset($_GET["nome"]) && $_GET["nome"] != "") {
                             $conditions[] = "persona.nome LIKE ?";
                             $stmt_type .= "s";
@@ -229,6 +231,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         $params = array();
                         $stmt_type = "";
 
+                        //primo filro che implementa il nome che controlla se c'è e in caso aggiunta un filto 
                         if (isset($_GET["nome"]) && $_GET["nome"] != "") {
                             $conditions[] = " nome LIKE ? ";
                             $stmt_type .= "s";
