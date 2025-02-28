@@ -340,82 +340,104 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $statuscode = 404; //operazione non presente nella web api
 }
 
+// Verifica se il metodo di richiesta è POST
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Switch per gestire diverse operazioni basate sul valore di $op
     switch ($op) {
+        // Caso per creare un nuovo cliente con tessera
         case "crea_clientetessera":
+            // Verifica se tutti i parametri necessari sono stati inviati
             if(isset($_POST["nome"]) && isset($_POST["cognome"]) && isset($_POST["mail"]) && isset($_POST["sede_id"])) {
                 try {
+                    // Inizia una transazione per garantire l'atomicità delle operazioni
                     $conn->begin_transaction();
 
-                    // Inserimento iniziale della persona necessario per poi creare la tessera
+                    // Inserimento della persona nel database
                     $stmt = $conn->prepare("INSERT INTO persona (nome, cognome, mail) VALUES (?, ?, ?)");
                     $stmt->bind_param("sss", $_POST["nome"], $_POST["cognome"], $_POST["mail"]);
                     $stmt->execute();
+                    // Ottieni l'ID della persona appena inserita
                     $cliente_id = $conn->insert_id;
                     
+                    // Inserimento della tessera associata al cliente
                     $stmt = $conn->prepare("INSERT INTO tessera (sede_creazione_id, punti, cliente_id) VALUES (?, 0, ?)");
                     $stmt->bind_param("ii", $_POST["sede_id"], $cliente_id);
                     $stmt->execute();
-                    
-                    $conn->commit();
-                    $statuscode = 200;
+
+                    // Conferma la transazione
+                    if ($conn->commit()) {
+                        $statuscode = 200; // operazione ha avuto sucesso
+                    } else {
+                        $statuscode = 204; //l'operazione non si è conessa corretamente 
+                    }
 
                 } catch (Exception $e) {
-                    $conn->rollback();
-                    $statuscode = 500; //l'operazione non è stata eseguita con succeso dal server
-                    error_log($e->getMessage());
+                    $conn->rollback(); // In caso di errore, annulla la transazione
+                
+                    $statuscode = 500; // (Errore interno del server)
                 }
             } else {
-                $statuscode = 400; //l'operazione ha restituito false per parametri insufficienti
+                $statuscode = 400; // non ci sono tutti i valori necessari per eseguire il valore
             }
             break;
         default:
-            $statuscode = 404; //operazione non presente nella web api
+            $statuscode = 404;  //operazione non presente nella web api
             break;
     }
 } else {
-    $statuscode = 404; //operazione non presente nella web api
+    // imposta il codice di stato a 404 (Non trovato)
+    $statuscode = 404;
 }
 
+// Verifica se il metodo di richiesta è DELETE
 if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
+    // Switch per gestire diverse operazioni basate sul valore di $op
     switch ($op) {
+        // Caso per eliminare un cliente
         case "elimina_cliente":
+            // Ottieni l'ID del cliente da eliminare
             $id = isset($_GET['id']) ? $_GET['id'] : null;
 
+            // Se l'ID non è stato fornito, imposta il codice di stato a 400 (Richiesta non valida)
             if($id === null) {
                 $statuscode = 400;
                 break;
             }
 
             try {
+                // Inizia una transazione per garantire l'atomicità delle operazioni
                 $conn->begin_transaction();
 
-                // Eliminazione della tessera 
+                // Elimina la tessera associata al cliente
                 $stmt = $conn->prepare("DELETE FROM tessera WHERE cliente_id = ?");
                 $stmt->bind_param("i", $id);
                 $stmt->execute();
 
-                // Eliminazione del cliente
+                // Elimina il cliente
                 $stmt = $conn->prepare("DELETE FROM persona WHERE id = ?");
                 $stmt->bind_param("i", $id);
                 $stmt->execute();
 
+                // Se nessuna riga è stata influenzata, il cliente non esiste
                 if($stmt->affected_rows === 0) {
                     $statuscode = 404;
                     throw new Exception("Cliente non trovato con ID: $id");
                 }
 
-                $conn->commit();
-                $statuscode = 200;
+                if ($conn->commit()) {
+                    $statuscode = 200; // operazione ha avuto sucesso
+                } else {
+                    $statuscode = 204; //l'operazione non si è conessa corretamente 
+                }
 
             } catch (Exception $e) {
-                $conn->rollback();
-                $statuscode = 500;
-                error_log($e->getMessage());
+                $conn->rollback(); // In caso di errore, annulla la transazione
+
+                $statuscode = 500; // (Errore interno del server)
             }
             break;
         default:
-            $statuscode = 404;
+            $statuscode = 404; //operazione non presente nella web api
             break;
     }
 }
